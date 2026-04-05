@@ -1,5 +1,6 @@
 __pycache__/
 mini_bdx_runtime.egg-info/
+*.onnx
 build
 dist
 env_ducksoup

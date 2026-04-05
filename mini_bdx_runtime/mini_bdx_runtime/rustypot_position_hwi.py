@@ -124,43 +124,37 @@ class HWI:
         self.io.write_goal_position(
             list(self.joints.values()), list(ids_positions.values())
         )
-
     def get_present_positions(self, ignore=[]):
-        """
-        Returns the present positions in radians
-        """
+        values = []
+        for joint, motor_id in self.joints.items():
+            if joint in ignore:
+                continue
+            try:
+                pos = self.io.read_present_position([motor_id])[0]
+            except BaseException as e:
+                msg = repr(e)
+                print(f"[read_present_position joint={joint} id={motor_id}] {msg}")
+                if "PanicException" in msg or "PoisonError" in msg:
+                    raise RuntimeError("rustypot poisoned; restart process")
+                return None
+            values.append(pos - self.joints_offsets[joint])
 
-        try:
-            present_positions = self.io.read_present_position(
-                list(self.joints.values())
-            )
-        except Exception as e:
-            print(e)
-            return None
+        return np.array(np.around(values, 3))
 
-        present_positions = [
-            pos - self.joints_offsets[joint]
-            for joint, pos in zip(self.joints.keys(), present_positions)
-            if joint not in ignore
-        ]
-        return np.array(np.around(present_positions, 3))
 
     def get_present_velocities(self, rad_s=True, ignore=[]):
-        """
-        Returns the present velocities in rad/s (default) or rev/min
-        """
-        try:
-            present_velocities = self.io.read_present_velocity(
-                list(self.joints.values())
-            )
-        except Exception as e:
-            print(e)
-            return None
+        values = []
+        for joint, motor_id in self.joints.items():
+            if joint in ignore:
+                continue
+            try:
+                vel = self.io.read_present_velocity([motor_id])[0]
+            except BaseException as e:
+                msg = repr(e)
+                print(f"[read_present_velocity joint={joint} id={motor_id}] {msg}")
+                if "PanicException" in msg or "PoisonError" in msg:
+                    raise RuntimeError("rustypot poisoned; restart process")
+                return None
+            values.append(vel)
 
-        present_velocities = [
-            vel
-            for joint, vel in zip(self.joints.keys(), present_velocities)
-            if joint not in ignore
-        ]
-
-        return np.array(np.around(present_velocities, 3))
+        return np.array(np.around(values, 3))

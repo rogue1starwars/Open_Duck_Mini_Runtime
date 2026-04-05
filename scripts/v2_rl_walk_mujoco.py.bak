@@ -35,10 +35,8 @@ class RLWalk:
         save_obs=False,
         replay_obs=None,
         cutoff_frequency=None,
-        fixed_lin_vel_x=0.07,   # 追加
-        fixed_lin_vel_y=0.0,    # 追加
-        fixed_ang_vel=0.0,      # 追加
     ):
+
         self.duck_config = DuckConfig(config_json_path=duck_config_path)
 
         self.commands = commands
@@ -92,19 +90,9 @@ class RLWalk:
         self.motor_targets = np.array(self.init_pos.copy())
         self.prev_motor_targets = np.array(self.init_pos.copy())
 
-        self.fixed_commands = [
-            fixed_lin_vel_x,
-            fixed_lin_vel_y,
-            fixed_ang_vel,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
+        self.last_commands = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-        self.last_commands = self.fixed_commands.copy() if not self.commands else [0.0] * 7
-
-        self.paused = False if not self.commands else self.duck_config.start_paused
+        self.paused = self.duck_config.start_paused
 
         self.command_freq = 20  # hz
         if self.commands:
@@ -257,9 +245,6 @@ class RLWalk:
                             print("PAUSE")
                         else:
                             print("UNPAUSE")
-
-                if not self.commands:
-                    self.last_commands = self.fixed_commands.copy()
 
                 if self.paused:
                     time.sleep(0.1)
